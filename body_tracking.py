@@ -35,51 +35,36 @@ from detecta import detect_peaks
 
 
 def calcurate_angle_3d(a, b, c):
-    
-    # Calculate dierction vector
+    # Shorten!!!! Ref: https://stackoverflow.com/questions/35176451/python-code-to-calculate-angle-between-three-point-using-their-3d-coordinates
     v1 = np.subtract(b,a)
     v2 = np.subtract(b,c)
-
-    # Claculate dot_product 
     dot_product = np.dot(v1,v2)
-
-    # Claculate denominator
     v1_2 = np.power(v1,2)
     v2_2 = np.power(v2,2)
-
     v1_2 = v1_2.tolist()
     v2_2 = v2_2.tolist()
-
     v1_2_s = sum(v1_2)
     v2_2_s = sum(v2_2)
-
-
     v1_2_s = math.sqrt(v1_2_s)
     v2_2_s = math.sqrt(v2_2_s)
-
     den_angle = v1_2_s * v2_2_s
-    
     output = dot_product/den_angle
-    
-
     radians = np.arccos(output)
     angle = np.abs(radians*180.0/np.pi)
-
     if angle > 180.0:
         angle = 360 - angle
-
-
     return angle
 
-def calculate_distance_3d(a, b):
 
+# Dont need => np.linalg.norm(b-a)
+def calculate_distance_3d(a, b):
     v = np.subtract(b, a)
     v_2 = np.power(v,2)
     v = v_2.tolist()
     dis_v = sum(v)
     dis_v = math.sqrt(dis_v)
-
     return dis_v
+
 
 def calculate_average_flextion(a, b):
     
@@ -94,8 +79,6 @@ def calculate_average_flextion(a, b):
         sub_list = b[start:end]
         sub_lists.append(sub_list)
 
-    
-
     max_len = max([len(sub_list) for sub_list in sub_lists])
     result = []
     for i in range(max_len):
@@ -104,17 +87,10 @@ def calculate_average_flextion(a, b):
             if i < len(sub_lists[j]):
                 total += sub_lists[j][i]
         result.append(total)
-
       
-
     gait_avr = [x / len(sub_lists) for x in result]
     
-
     return gait_avr
-
-
-    
-
 
 
 if __name__ == "__main__":
@@ -139,10 +115,6 @@ if __name__ == "__main__":
         init_params.svo_real_time_mode = True
         init_params.set_from_svo_file(filepath)
     
-  
-
-
-
     # Open the camera
     err = zed.open(init_params)
     if err != sl.ERROR_CODE.SUCCESS:
@@ -162,7 +134,6 @@ if __name__ == "__main__":
 
     # Enable Object Detection module
     zed.enable_object_detection(obj_param)
- 
 
     obj_runtime_param = sl.ObjectDetectionRuntimeParameters()
     obj_runtime_param.detection_confidence_threshold = 40
@@ -188,8 +159,6 @@ if __name__ == "__main__":
     left_knee_flexion = []
     prevTime = 0
 
-    
-
     while viewer.is_available():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
@@ -198,7 +167,6 @@ if __name__ == "__main__":
             # Retrieve objects
             zed.retrieve_objects(bodies, obj_runtime_param)
             
-    
             # Update GL view
             viewer.update_view(image, bodies) 
             # Update OCV view
@@ -206,11 +174,8 @@ if __name__ == "__main__":
             cv_viewer.render_2D(image_left_ocv,image_scale,bodies.object_list, obj_param.enable_tracking, obj_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
             cv2.waitKey(10)
-            # Extrackt landmarks
            
             # Get coordinates
-           
-          
             for obj in bodies.object_list:
                 
                 neck = obj.keypoint[sl.BODY_PARTS.NECK.value]
@@ -256,8 +221,6 @@ if __name__ == "__main__":
                 left_knee = left_knee*10
                 left_ankle = left_ankle*10
 
-
-
                 # Calculate right hand angle
                 right_hand_angle = calcurate_angle_3d(right_shoulder, right_elbow, right_wrist)
                 right_hand_angle = round(right_hand_angle, 2)
@@ -274,8 +237,6 @@ if __name__ == "__main__":
                 left_knee_angle = 180 - left_knee_angle
                 left_knee_angle = round(left_knee_angle, 2)
                 left_knee_flexion.append(left_knee_angle)
-                
-
 
                 # The distance between two points
                 distance_point = calculate_distance_3d(left_knee, right_knee)
@@ -285,48 +246,15 @@ if __name__ == "__main__":
 
     # Gait cycle average flexion
     average_flexion = calculate_average_flextion(ankle_distance_point,right_knee_flexion)
-            
-
-                
-    
-    # Get real coordinate 
-    # output = np.subtract(neck_y,neck_y[0])
-    # b = (output*-1)
-    # neck_y = b.tolist()
-    # print(len(neck_y))
-    # print(right_elbow_angle)
-    # print(ankle_distance_point)
-    # print(right_knee_flexion)
+   
     print(average_flexion)
-
-    # print(len(left_knee_flexion))
-    # print("@",len(left_knee_flexion))
-    # print("@@",right_knee_flexion)
-    # print("@@@",ankle_distance_point)
-
     plt.plot(average_flexion)
-    # # fig, axes = plt.subplots(1,3)
-    # # axes[0].plot(right_knee_flexion)
-    # # axes[1].plot(left_knee_flexion)
-    # # axes[2].plot(ankle_distance_point)
-    # # # plt.plot(right_knee_flexion)
-    # plt.plot(ankle_distance_point)
-    # # plt.title('Knee distance point')
-    # # plt.ylabel('Distance(m)')
-    # # plt.xlabel('frame')
     plt.show()
    
-    
-                
-            
-
     viewer.exit()
     
-
     image.free(sl.MEM.CPU)
     # Disable modules and close camera
     zed.disable_object_detection()
     zed.disable_positional_tracking()
     zed.close()
-
-   
